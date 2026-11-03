@@ -17,7 +17,7 @@
   --ink: #18222D;
   --muted: #5B6875;
   --line: #DDE2E7;
-  --accent: #1E6F64;      /* зважене */
+  --accent: #1E6F64;      /* основний колір смуг */
   --accent-soft: #CFE3DF;
   --full: #B9C3CC;        /* усього */
   --gold: #B07D1E;        /* часова шкала */
@@ -125,6 +125,8 @@ tfoot td { font-weight: 600; border-bottom: 0; }
 .chip { font-size: 13px; background: var(--accent-soft); border-radius: 14px; padding: 4px 6px 4px 12px; display: inline-flex; align-items: center; gap: 4px; }
 .chip button { font: inherit; border: 0; background: none; color: var(--ink); cursor: pointer; padding: 0 6px; font-size: 15px; line-height: 1; }
 .count { font-size: 13px; color: var(--muted); }
+#chip { display: inline-flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chip-reset { font: inherit; font-size: 13px; background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; padding: 4px; }
 @media (max-width: 720px) { .hide-s { display: none; } }
 @media (prefers-reduced-motion: no-preference) { .track .w, .track .full { transition: width .35s ease; } }
 </style>
@@ -145,10 +147,9 @@ tfoot td { font-weight: 600; border-bottom: 0; }
   </header>
 
   <section class="kpis" aria-label="Підсумки">
-    <div class="kpi main"><p>Зважений обсяг, км/рік</p><div class="v" id="k_kmw"></div><p>обсяг × ймовірність етапу</p></div>
-    <div class="kpi"><p>Зважена вартість, €/рік</p><div class="v" id="k_eurw"></div><p id="k_eurw_s"></p></div>
-    <div class="kpi"><p>Усього у воронці, км/рік</p><div class="v" id="k_km"></div><p>без зважування</p></div>
-    <div class="kpi"><p>Усього у воронці, €/рік</p><div class="v" id="k_eur"></div><p>без зважування</p></div>
+    <div class="kpi main"><p>Обсяг у воронці, км/рік</p><div class="v" id="k_km"></div><p>усі угоди</p></div>
+    <div class="kpi"><p>Завантаження заводу, км/міс</p><div class="v" id="k_kmm"></div><p>після старту всіх угод</p></div>
+    <div class="kpi"><p>Вартість у воронці, €/рік</p><div class="v" id="k_eur"></div><p id="k_eur_s"></p></div>
     <div class="kpi"><p>Угод</p><div class="v" id="k_n"></div><p>клієнтів і окремих проєктів</p></div>
   </section>
 
@@ -156,7 +157,7 @@ tfoot td { font-weight: 600; border-bottom: 0; }
     <div class="card-head">
       <div>
         <h2>Обсяг на кожному етапі</h2>
-        <p class="sub">Сіра смуга — усе, що є на етапі, зелена — зважене на ймовірність. Натисніть етап, щоб відфільтрувати таблицю угод.</p>
+        <p class="sub">Натисніть етап, щоб відібрати його угоди в таблиці «Усі угоди». Повторне натискання знімає відбір.</p>
       </div>
       <div class="seg" role="group" aria-label="Одиниці">
         <button type="button" data-metric="km" aria-pressed="true">км/рік</button>
@@ -168,12 +169,12 @@ tfoot td { font-weight: 600; border-bottom: 0; }
 
   <section class="card">
     <h2>Етапи в цифрах</h2>
-    <p class="sub">Ймовірність задана етапу. Зважені значення — очікуване, а не прогноз по конкретному клієнту.</p>
+    <p class="sub">Частка — від загального обсягу воронки в км.</p>
     <div class="tbox">
       <table>
         <thead><tr>
-          <th>Етап</th><th class="n">Ймовірність</th><th class="n">Угод</th><th class="n hide-s">км/міс</th>
-          <th class="n">км/рік</th><th class="n">Зважено км/рік</th><th class="n hide-s">€/рік</th><th class="n">Зважено €/рік</th>
+          <th>Етап</th><th class="n">Угод</th><th class="n hide-s">км/міс</th>
+          <th class="n">км/рік</th><th class="n">Частка</th><th class="n">€/рік</th>
         </tr></thead>
         <tbody id="stageBody"></tbody>
         <tfoot id="stageFoot"></tfoot>
@@ -183,11 +184,10 @@ tfoot td { font-weight: 600; border-bottom: 0; }
 
   <section class="card">
     <h2>Коли обсяг заходить на завод</h2>
-    <p class="sub">Стовпці — зважений місячний обсяг, що стартує в кварталі; лінії — накопичене місячне завантаження заводу.</p>
+    <p class="sub">Стовпці — місячний обсяг, що стартує в кварталі; лінія — накопичене місячне завантаження заводу.</p>
     <ul class="legend">
-      <li><span class="sw" style="background:var(--accent)"></span>Стартує в кварталі, зважено</li>
-      <li><span class="sw line" style="background:var(--gold)"></span>Накопичено, зважено</li>
-      <li><span class="sw dash"></span>Накопичено, якщо всі угоди закриються</li>
+      <li><span class="sw" style="background:var(--accent)"></span>Стартує в кварталі</li>
+      <li><span class="sw line" style="background:var(--gold)"></span>Накопичене завантаження</li>
     </ul>
     <div class="chart" id="timeline"></div>
   </section>
@@ -195,12 +195,12 @@ tfoot td { font-weight: 600; border-bottom: 0; }
   <div class="grid2">
     <section class="card">
       <h2>Звідки обсяг</h2>
-      <p class="sub">Джерело походження обсягу.</p>
+      <p class="sub">Джерело походження обсягу. Натисніть рядок, щоб відібрати угоди.</p>
       <div class="bars" id="types"></div>
     </section>
     <section class="card">
       <h2>Що заважає</h2>
-      <p class="sub">Обсяг угод із зазначеною перешкодою, км/рік. Угода з двома перешкодами враховується в обох.</p>
+      <p class="sub">Обсяг угод із зазначеною перешкодою, км/рік. Угода з двома перешкодами враховується в обох. Натисніть рядок, щоб відібрати угоди.</p>
       <div class="bars" id="blockers"></div>
     </section>
   </div>
@@ -223,7 +223,6 @@ tfoot td { font-weight: 600; border-bottom: 0; }
           <th data-k="deal"><button type="button">Угода</button></th>
           <th data-k="country" class="hide-s"><button type="button">Країна</button></th>
           <th data-k="stage"><button type="button">Етап</button></th>
-          <th data-k="probability" class="n"><button type="button">Ймов.</button></th>
           <th data-k="type" class="hide-s"><button type="button">Тип обсягу</button></th>
           <th data-k="km_year" class="n" aria-sort="descending"><button type="button">км/рік</button></th>
           <th data-k="price" class="n hide-s"><button type="button">€/км</button></th>
@@ -290,7 +289,19 @@ const STAGE_P = { "1. Інтерес / запит": 0.10, "2. КП надано 
 const DEFAULT_PRICE = 60; /* умовна ціна €/км, якщо у файлі не вказано */
 const TRANSFER = "Перенесення з України";
 
-let deals = [], source = "", metric = "km", stageFilter = null, query = "", sortKey = "km_year", sortDir = -1;
+let deals = [], source = "", metric = "km", query = "", sortKey = "km_year", sortDir = -1;
+/* Відбір угод: клік по рядку в блоках «Обсяг на кожному етапі», «Звідки обсяг», «Що заважає» */
+const filters = { stage: null, type: null, blocker: null };
+const FILTER_LABEL = { stage: "Етап", type: "Звідки", blocker: "Перешкода" };
+const blockersOf = (d) => d.blocker.split(",").map((x) => x.trim()).filter(Boolean);
+const keyOf = { stage: (d) => d.stage || "Без етапу", type: (d) => d.type || "Не вказано" };
+function matches(d) {
+  if (filters.stage && keyOf.stage(d) !== filters.stage) return false;
+  if (filters.type && keyOf.type(d) !== filters.type) return false;
+  if (filters.blocker && !blockersOf(d).includes(filters.blocker)) return false;
+  return true;
+}
+function clearFilters() { filters.stage = filters.type = filters.blocker = null; }
 
 /* ===== Форматування ===== */
 const nf = new Intl.NumberFormat("uk-UA", { maximumFractionDigits: 0 });
@@ -367,58 +378,48 @@ function agg(list) {
     n: list.length,
     km_month: sum(list, (d) => d.km_month),
     km: sum(list, (d) => d.km_year),
-    kmw: sum(list, (d) => d.km_year * d.probability),
     eur: sum(list, (d) => d.value),
-    eurw: sum(list, (d) => d.value * d.probability),
   };
 }
 function byStage() {
-  return [...groupBy(deals, (d) => d.stage || "Без етапу")]
-    .map(([stage, list]) => ({ stage, p: list[0].probability, ...agg(list) }))
-    .sort((a, b) => a.stage.localeCompare(b.stage, "uk"));
+  return [...groupBy(deals, keyOf.stage)]
+    .map(([key, list]) => ({ key, label: key, ...agg(list) }))
+    .sort((a, b) => a.key.localeCompare(b.key, "uk"));
 }
 function byType() {
-  return [...groupBy(deals, (d) => d.type || "Не вказано")]
-    .map(([type, list]) => ({ label: type, ...agg(list) }))
-    .sort((a, b) => b.kmw - a.kmw);
+  return [...groupBy(deals, keyOf.type)]
+    .map(([key, list]) => ({ key, label: key, ...agg(list) }))
+    .sort((a, b) => b.km - a.km);
 }
 function byBlocker() {
   const m = new Map();
-  for (const d of deals) for (const b of d.blocker.split(",").map((x) => x.trim()).filter(Boolean)) {
+  for (const d of deals) for (const b of blockersOf(d)) {
     if (!m.has(b)) m.set(b, []); m.get(b).push(d);
   }
-  return [...m].map(([label, list]) => ({ label, ...agg(list) })).sort((a, b) => b.km - a.km);
+  return [...m].map(([key, list]) => ({ key, label: key, ...agg(list) })).sort((a, b) => b.km - a.km);
 }
 function byQuarter() {
   const g = groupBy(deals.filter((d) => d.start), (d) => d.start.slice(0, 4) + " Q" + (Math.floor((+d.start.slice(5, 7) - 1) / 3) + 1));
-  let cf = 0, cw = 0;
+  let cf = 0;
   return [...g].sort((a, b) => a[0].localeCompare(b[0])).map(([q, list]) => {
-    const f = sum(list, (d) => d.km_month), w = sum(list, (d) => d.km_month * d.probability);
-    cf += f; cw += w;
-    return { q, f, w, cf, cw };
+    const f = sum(list, (d) => d.km_month);
+    cf += f;
+    return { q, f, cf };
   });
 }
 
 /* ===== Відмальовування ===== */
 function renderHead() {
   const t = agg(deals);
-  const moveW = sum(deals.filter((d) => d.type === TRANSFER), (d) => d.km_year * d.probability);
-  const share = t.kmw ? Math.round((moveW / t.kmw) * 100) : 0;
   const take = document.getElementById("take");
-  // take.replaceChildren(
-  //   "Зважено новий завод можна завантажити приблизно на ", el("b", null, fmt(t.kmw / 12)),
-  //   " км/міс із ", el("b", null, fmt(t.km_month)), " км/міс, які заявили менеджери. ",
-  //   el("b", null, share + "%"), " зваженого обсягу — перенесення існуючих клієнтів з України, а не нові продажі."
-  // );
   const prices = new Set(deals.map((d) => d.price));
   const starts = deals.map((d) => d.start).filter(Boolean).sort();
   // const note = document.getElementById("note");
   const priceTxt = prices.size === 1 ? `Ціна для всіх угод однакова — ${fmt([...prices][0])} €/км` : "Ціни вказано по угодах";
   // note.textContent = `Етапи й ймовірності — припущення за коментарями менеджерів, їх треба підтвердити. ${priceTxt}${starts.length ? `, найраніший старт — ${dmy(starts[0])}` : ""}.`;
-  document.getElementById("k_kmw").textContent = fmt(t.kmw);
-  document.getElementById("k_eurw").textContent = fmt(t.eurw);
-  document.getElementById("k_eurw_s").textContent = prices.size === 1 ? "за умовною ціною" : "за цінами з угод";
   document.getElementById("k_km").textContent = fmt(t.km);
+  document.getElementById("k_kmm").textContent = fmt(t.km_month);
+  document.getElementById("k_eur_s").textContent = prices.size === 1 ? `за ціною ${fmt([...prices][0])} €/км` : "за цінами з угод";
   document.getElementById("k_eur").textContent = fmt(t.eur);
   document.getElementById("k_n").textContent = fmt(t.n);
   const src = document.getElementById("src");
@@ -427,23 +428,24 @@ function renderHead() {
 }
 
 function barRows(container, rows, opts) {
-  const fullKey = opts.full, wKey = opts.w, unit = opts.unit;
-  const max = Math.max(1, ...rows.map((r) => r[fullKey]));
+  const valKey = opts.value, unit = opts.unit, fk = opts.filter;
+  const max = Math.max(1, ...rows.map((r) => r[valKey]));
   container.replaceChildren(...rows.map((r) => {
-    const row = el(opts.clickable ? "button" : "div", "bar-row");
-    if (opts.clickable) {
-      row.type = "button";
-      row.setAttribute("aria-pressed", String(stageFilter === r.stage));
-      row.addEventListener("click", () => { stageFilter = stageFilter === r.stage ? null : r.stage; renderAll(); document.getElementById("deals").scrollIntoView({ behavior: "smooth", block: "start" }); });
-    }
-    const lab = el("div", "bar-label", r.stage || r.label);
+    const row = el("button", "bar-row");
+    row.type = "button";
+    row.setAttribute("aria-pressed", String(filters[fk] === r.key));
+    row.addEventListener("click", () => {
+      filters[fk] = filters[fk] === r.key ? null : r.key;
+      renderAll();
+      if (filters[fk]) document.getElementById("deals").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    const lab = el("div", "bar-label", r.label);
     lab.append(el("small", null, opts.sub(r)));
     const track = el("div", "track");
-    const full = el("div", "full"); full.style.width = (100 * r[fullKey] / max) + "%";
-    const w = el("div", "w"); w.style.width = (100 * r[wKey] / max) + "%";
-    track.append(full, w);
+    const bar = el("div", "w"); bar.style.width = (100 * r[valKey] / max) + "%";
+    track.append(bar);
     const val = el("div", "bar-val");
-    val.append("зважено ", el("b", null, fmt(r[wKey]) + unit), ` з ${fmt(r[fullKey])}${unit}`);
+    val.append(el("b", null, fmt(r[valKey]) + unit));
     row.append(lab, track, val);
     return row;
   }));
@@ -453,8 +455,8 @@ function barRows(container, rows, opts) {
 function renderFunnel() {
   const km = metric === "km";
   barRows(document.getElementById("funnel"), byStage(), {
-    full: km ? "km" : "eur", w: km ? "kmw" : "eurw", unit: km ? " км" : " €", clickable: true,
-    sub: (r) => `${pct(r.p)} · ${r.n} угод`,
+    value: km ? "km" : "eur", unit: km ? " км" : " €", filter: "stage",
+    sub: (r) => `${r.n} угод`,
   });
 }
 
@@ -462,10 +464,10 @@ function renderStageTable() {
   const rows = byStage(), t = agg(deals);
   const tr = (cells) => { const r = el("tr"); cells.forEach(([v, c]) => r.append(el("td", c, v))); return r; };
   document.getElementById("stageBody").replaceChildren(...rows.map((r) => tr([
-    [r.stage], [pct(r.p), "n"], [fmt(r.n), "n"], [fmt(r.km_month), "n hide-s"], [fmt(r.km), "n"], [fmt(r.kmw), "n"], [fmt(r.eur), "n hide-s"], [fmt(r.eurw), "n"],
+    [r.label], [fmt(r.n), "n"], [fmt(r.km_month), "n hide-s"], [fmt(r.km), "n"], [t.km ? pct(r.km / t.km) : "", "n"], [fmt(r.eur), "n"],
   ])));
   document.getElementById("stageFoot").replaceChildren(tr([
-    ["Разом"], [t.km ? pct(t.kmw / t.km) : "", "n"], [fmt(t.n), "n"], [fmt(t.km_month), "n hide-s"], [fmt(t.km), "n"], [fmt(t.kmw), "n"], [fmt(t.eur), "n hide-s"], [fmt(t.eurw), "n"],
+    ["Разом"], [fmt(t.n), "n"], [fmt(t.km_month), "n hide-s"], [fmt(t.km), "n"], [t.km ? "100%" : "", "n"], [fmt(t.eur), "n"],
   ]));
 }
 
@@ -482,7 +484,7 @@ function renderTimeline() {
   const ticks = []; for (let v = 0; v <= maxY; v += step) ticks.push(v);
   const yTop = ticks[ticks.length - 1] || maxY;
   const left = Math.max(...ticks.map((t) => fmt(t).length)) * 7.5 + 12;
-  const endLabel = fmt(rows[rows.length - 1].cw) + " км/міс";
+  const endLabel = fmt(rows[rows.length - 1].cf) + " км/міс";
   const right = endLabel.length * 7 + 14;
   const plotW = W - left - right;
   const y = (v) => H - bottom - (v / yTop) * (H - top - bottom);
@@ -497,20 +499,19 @@ function renderTimeline() {
   }
   const bw = Math.min(36, band * 0.55);
   rows.forEach((r, i) => {
-    svg.append(s("rect", { x: cx(i) - bw / 2, y: y(r.w), width: bw, height: Math.max(0, y(0) - y(r.w)), rx: 4, fill: C.accent }));
+    svg.append(s("rect", { x: cx(i) - bw / 2, y: y(r.f), width: bw, height: Math.max(0, y(0) - y(r.f)), rx: 4, fill: C.accent }));
     svg.append(s("text", { x: cx(i), y: H - bottom + 18, "text-anchor": "middle" }, r.q));
   });
   const path = (key) => rows.map((r, i) => (i ? "L" : "M") + cx(i) + " " + y(r[key])).join(" ");
-  svg.append(s("path", { d: path("cf"), fill: "none", stroke: C.full, "stroke-width": 2, "stroke-dasharray": "6 5" }));
-  svg.append(s("path", { d: path("cw"), fill: "none", stroke: C.gold, "stroke-width": 2.5, "stroke-linejoin": "round", "stroke-linecap": "round" }));
-  rows.forEach((r, i) => svg.append(s("circle", { cx: cx(i), cy: y(r.cw), r: 3.5, fill: C.gold })));
+  svg.append(s("path", { d: path("cf"), fill: "none", stroke: C.gold, "stroke-width": 2.5, "stroke-linejoin": "round", "stroke-linecap": "round" }));
+  rows.forEach((r, i) => svg.append(s("circle", { cx: cx(i), cy: y(r.cf), r: 3.5, fill: C.gold })));
   const last = rows.length - 1;
-  svg.append(s("text", { x: cx(last) + 10, y: y(rows[last].cw) + 4, style: `fill:${C.ink};font-weight:600` }, endLabel));
+  svg.append(s("text", { x: cx(last) + 10, y: y(rows[last].cf) + 4, style: `fill:${C.ink};font-weight:600` }, endLabel));
   const tip = el("div", "tip"); tip.hidden = true;
   rows.forEach((r, i) => {
     const hit = s("rect", { x: left + band * i, y: 0, width: band, height: H - bottom, fill: "transparent" });
     hit.addEventListener("mousemove", (ev) => {
-      tip.replaceChildren(el("div", "h", r.q), el("div", null, `Стартує, зважено: ${fmt(r.w)} км/міс`), el("div", null, `Накопичено, зважено: ${fmt(r.cw)} км/міс`), el("div", null, `Накопичено, усього: ${fmt(r.cf)} км/міс`));
+      tip.replaceChildren(el("div", "h", r.q), el("div", null, `Стартує: ${fmt(r.f)} км/міс`), el("div", null, `Накопичено: ${fmt(r.cf)} км/міс`));
       tip.hidden = false;
       const b = box.getBoundingClientRect();
       const px = ev.clientX - b.left, py = ev.clientY - b.top;
@@ -524,29 +525,35 @@ function renderTimeline() {
 }
 
 function renderSide() {
-  barRows(document.getElementById("types"), byType(), { full: "km", w: "kmw", unit: " км", sub: (r) => `${r.n} угод` });
-  barRows(document.getElementById("blockers"), byBlocker(), { full: "km", w: "kmw", unit: " км", sub: (r) => `${r.n} угод` });
+  barRows(document.getElementById("types"), byType(), { value: "km", unit: " км/рік", filter: "type", sub: (r) => `${r.n} угод` });
+  barRows(document.getElementById("blockers"), byBlocker(), { value: "km", unit: " км/рік", filter: "blocker", sub: (r) => `${r.n} угод` });
 }
 
 function renderDeals() {
   const chip = document.getElementById("chip");
   chip.replaceChildren();
-  if (stageFilter) {
-    const c = el("span", "chip", "Етап: " + stageFilter);
-    const x = el("button", null, "×"); x.type = "button"; x.setAttribute("aria-label", "Скинути фільтр етапу");
-    x.addEventListener("click", () => { stageFilter = null; renderAll(); });
+  const active = Object.keys(filters).filter((k) => filters[k]);
+  for (const k of active) {
+    const c = el("span", "chip", `${FILTER_LABEL[k]}: ${filters[k]}`);
+    const x = el("button", null, "×"); x.type = "button"; x.setAttribute("aria-label", `Скинути відбір «${FILTER_LABEL[k]}»`);
+    x.addEventListener("click", () => { filters[k] = null; renderAll(); });
     c.append(x); chip.append(c);
   }
-  const num = new Set(["probability", "km_year", "price", "value"]);
+  if (active.length > 1) {
+    const all = el("button", "chip-reset", "Скинути всі"); all.type = "button";
+    all.addEventListener("click", () => { clearFilters(); renderAll(); });
+    chip.append(all);
+  }
+  const num = new Set(["km_year", "price", "value"]);
   const rows = deals
-    .filter((d) => !stageFilter || d.stage === stageFilter)
+    .filter(matches)
     .filter((d) => !query || Object.values(d).join(" ").toLowerCase().includes(query))
     .sort((a, b) => {
       const va = a[sortKey], vb = b[sortKey];
       return (num.has(sortKey) ? (va - vb) : String(va).localeCompare(String(vb), "uk")) * sortDir;
     });
   document.getElementById("count").textContent = `${rows.length} з ${deals.length}`;
-  const cols = [["deal", null, "wide"], ["country", null, "hide-s"], ["stage"], ["probability", pct, "n"], ["type", null, "hide-s"],
+  const cols = [["deal", null, "wide"], ["country", null, "hide-s"], ["stage"], ["type", null, "hide-s"],
     ["km_year", fmt, "n"], ["price", fmt, "n hide-s"], ["value", fmt, "n hide-s"], ["start", dmy, "n"], ["blocker"], ["nonstandard", null, "hide-s wide"], ["check", null, "check"]];
   document.getElementById("dealBody").replaceChildren(...rows.map((d) => {
     const tr = el("tr");
@@ -561,7 +568,7 @@ function renderAll() { renderHead(); renderFunnel(); renderStageTable(); renderT
 function setData(rows, label) {
   const n = normalize(rows);
   if (!n.length) throw new Error("У файлі не знайдено угод. Потрібні колонки «Назва угоди» або «Організація», «Етап», «Обсяг км/міс».");
-  deals = n; source = label; stageFilter = null; renderAll();
+  deals = n; source = label; clearFilters(); renderAll();
 }
 function loadFile(file) {
   const reader = new FileReader();
@@ -583,17 +590,17 @@ document.getElementById("btnLoad").addEventListener("click", () => document.getE
 document.getElementById("file").addEventListener("change", (e) => { if (e.target.files[0]) loadFile(e.target.files[0]); e.target.value = ""; });
 document.addEventListener("dragover", (e) => e.preventDefault());
 document.addEventListener("drop", (e) => { e.preventDefault(); if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); });
-document.getElementById("btnReset").addEventListener("click", () => { deals = DRAFT.map((d) => ({ ...d, value: d.km_year * d.price })); source = DRAFT_LABEL; stageFilter = null; renderAll(); });
+document.getElementById("btnReset").addEventListener("click", () => { deals = DRAFT.map((d) => ({ ...d, value: d.km_year * d.price })); source = DRAFT_LABEL; clearFilters(); renderAll(); });
 
 /* ===== Збереження в Excel ===== */
 document.getElementById("btnExport").addEventListener("click", () => {
   if (typeof XLSX === "undefined") { alert("Бібліотека для Excel не завантажилась — потрібен інтернет."); return; }
   const rows = deals.map((d) => ({
-    "Назва угоди": d.deal, "Організація": d.client, "Країна": d.country, "Етап": d.stage, "Ймовірність": d.probability,
+    "Назва угоди": d.deal, "Організація": d.client, "Країна": d.country, "Етап": d.stage,
     "Тип обсягу": d.type, "Обсяг км/міс": d.km_month, "Обсяг км/рік": d.km_year, "Ціна EUR/км": d.price,
     "Вартість EUR/рік": d.value, "Очікуваний старт": d.start, "Блокер": d.blocker, "Нестандарт": d.nonstandard, "Коментарі": d.check,
   }));
-  const stages = byStage().map((r) => ({ "Етап": r.stage, "Ймовірність": r.p, "Угод": r.n, "км/міс": r.km_month, "км/рік": r.km, "Зважено км/рік": Math.round(r.kmw), "€/рік": r.eur, "Зважено €/рік": Math.round(r.eurw) }));
+  const stages = byStage().map((r) => ({ "Етап": r.label, "Угод": r.n, "км/міс": r.km_month, "км/рік": r.km, "€/рік": r.eur }));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), "Угоди");
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(stages), "Зведення по етапах");
@@ -611,7 +618,7 @@ document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("clic
 document.getElementById("search").addEventListener("input", (e) => { query = e.target.value.trim().toLowerCase(); renderDeals(); });
 document.querySelectorAll("#deals th[data-k]").forEach((th) => th.addEventListener("click", () => {
   const k = th.dataset.k;
-  if (k === sortKey) sortDir = -sortDir; else { sortKey = k; sortDir = ["probability", "km_year", "price", "value"].includes(k) ? -1 : 1; }
+  if (k === sortKey) sortDir = -sortDir; else { sortKey = k; sortDir = ["km_year", "price", "value"].includes(k) ? -1 : 1; }
   document.querySelectorAll("#deals th[data-k]").forEach((t) => t.dataset.k === sortKey ? t.setAttribute("aria-sort", sortDir > 0 ? "ascending" : "descending") : t.removeAttribute("aria-sort"));
   renderDeals();
 }));
